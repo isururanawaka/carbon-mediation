@@ -32,7 +32,7 @@ import java.util.Properties;
 
 public class VFSProcessor implements InboundRequestProcessor, TaskStartupObserver {
 
-	private FilePollingConsumer fileScanner;
+    private FilePollingConsumer fileScanner;
     private String name;
     private Properties vfsProperties;
     private long interval;
@@ -53,33 +53,33 @@ public class VFSProcessor implements InboundRequestProcessor, TaskStartupObserve
     }
 
     public void init() {
-    	log.info("Inbound file listener " + name + " starting ...");
-    	fileScanner = new FilePollingConsumer(vfsProperties, name, synapseEnvironment, interval);
-    	fileScanner.registerHandler(new FileInjectHandler(injectingSeq, onErrorSeq, synapseEnvironment, vfsProperties));
-    	start();
+        log.info("Inbound file listener " + name + " starting ...");
+        fileScanner = new FilePollingConsumer(vfsProperties, name, synapseEnvironment, interval);
+        fileScanner.registerHandler(new FileInjectHandler(injectingSeq, onErrorSeq, synapseEnvironment, vfsProperties));
+        start();
     }
-    
+
     public void destroy() {
         log.info("Inbound file listener " + name + " stoped.");
         startUpController.destroy();
     }
-      
+
     /**
      * Register/start the schedule service
-     * */
-    public void start() {        	
+     */
+    public void start() {
         try {
-        	Task task = new FileTask(fileScanner);
-        	TaskDescription taskDescription = new TaskDescription();
-        	taskDescription.setName(name + "-FILE-EP");
-        	taskDescription.setTaskGroup("FILE-EP");
-        	taskDescription.setInterval(interval);
-        	taskDescription.setIntervalInMs(true);
-        	taskDescription.addResource(TaskDescription.INSTANCE, task);
-        	taskDescription.addResource(TaskDescription.CLASSNAME, task.getClass().getName());
-        	startUpController = new StartUpController();
-        	startUpController.setTaskDescription(taskDescription);
-        	startUpController.init(synapseEnvironment);
+            Task task = new FileTask(fileScanner);
+            TaskDescription taskDescription = new TaskDescription();
+            taskDescription.setName(name + "-FILE-EP");
+            taskDescription.setTaskGroup("FILE-EP");
+            taskDescription.setInterval(interval);
+            taskDescription.setIntervalInMs(true);
+            taskDescription.addResource(TaskDescription.INSTANCE, task);
+            taskDescription.addResource(TaskDescription.CLASSNAME, task.getClass().getName());
+            startUpController = new StartUpController();
+            startUpController.setTaskDescription(taskDescription);
+            startUpController.init(synapseEnvironment);
 
         } catch (Exception e) {
             log.error("Could not start File Processor. Error starting up scheduler. Error: " + e.getLocalizedMessage());
@@ -94,9 +94,9 @@ public class VFSProcessor implements InboundRequestProcessor, TaskStartupObserve
         this.name = name;
     }
 
-	public void update() {
-		start();
-	}
+    public void update() {
+        start();
+    }
 }
 
 

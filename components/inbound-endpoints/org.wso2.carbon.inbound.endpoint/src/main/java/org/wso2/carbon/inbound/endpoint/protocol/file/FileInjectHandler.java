@@ -54,7 +54,8 @@ public class FileInjectHandler {
     private SynapseEnvironment synapseEnvironment;
 
     
-	public FileInjectHandler(String injectingSeq, String onErrorSeq, SynapseEnvironment synapseEnvironment, Properties vfsProperties){
+	public FileInjectHandler(String injectingSeq, String onErrorSeq, SynapseEnvironment synapseEnvironment,
+                             Properties vfsProperties){
 		this.injectingSeq = injectingSeq;
 		this.onErrorSeq = onErrorSeq;
 		this.synapseEnvironment = synapseEnvironment;
@@ -65,7 +66,7 @@ public class FileInjectHandler {
 	 * */
 	public boolean invoke(Object object){
 		
-		ManagedDataSource dataSource = null;;
+		ManagedDataSource dataSource = null;
 		FileObject file = (FileObject)object;
         try {
             org.apache.synapse.MessageContext msgCtx = createMessageContext();

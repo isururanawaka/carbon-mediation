@@ -38,7 +38,6 @@ import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.apache.synapse.core.SynapseEnvironment;
-import org.apache.synapse.transport.passthru.PassThroughConstants;
 import org.apache.synapse.transport.passthru.Pipe;
 import org.apache.synapse.transport.passthru.ProtocolState;
 import org.wso2.carbon.inbound.endpoint.protocol.http.utils.InboundConfiguration;
@@ -50,7 +49,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * class interact with Client Requests and get Http Requeests and passed them to Request worker
+ * class interact with Client Requests and get Http Requests and passed them to Request worker
  */
 public class InboundHttpSourceHandler implements NHttpServerEventHandler {
 
@@ -62,26 +61,41 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
     private InboundConfiguration inboundConfiguration;
     private ExecutorService executorService;
 
-    public InboundHttpSourceHandler(InboundConfiguration inboundConfiguration, SynapseEnvironment synapseEnvironment, String injectSeq, String faultSeq) {
+    private static final String INBOUND_THREAD_FACTORY = "inbound_request";
+    private static final String SYANPSE_RESPONSE_SOURCE_BUFFER = "synapse.response-source-buffer";
+
+    public InboundHttpSourceHandler(InboundConfiguration inboundConfiguration, SynapseEnvironment synapseEnvironment,
+                                    String injectSeq, String faultSeq) {
         this.synapseEnvironment = synapseEnvironment;
         this.injectSeq = injectSeq;
         this.faultSeq = faultSeq;
         this.inboundConfiguration = inboundConfiguration;
-        this.executorService = Executors.newFixedThreadPool(InboundConstants.WORKER_POOL_SIZE, new InboundThreadFactory("inbound_request"));
+        this.executorService = Executors.newFixedThreadPool(InboundConstants.WORKER_POOL_SIZE,
+                new InboundThreadFactory(INBOUND_THREAD_FACTORY));
     }
 
-
+    /**
+     * calls by http core when IO session is initiated to particular client connection.
+     * @param nHttpServerConnection
+     * @throws IOException
+     * @throws HttpException
+     */
     public void connected(NHttpServerConnection nHttpServerConnection) throws IOException, HttpException {
         inboundConfiguration.getSourceConnections().addConnection(nHttpServerConnection);
         InboundSourceContext.create(nHttpServerConnection, ProtocolState.REQUEST_READY, inboundConfiguration);
     }
 
+    /**
+     *
+     * @param nHttpServerConnection
+     * @throws IOException
+     * @throws HttpException
+     */
     public void requestReceived(NHttpServerConnection nHttpServerConnection) throws IOException, HttpException {
         try {
-            HttpContext _context = nHttpServerConnection.getContext();
-            _context.setAttribute(PassThroughConstants.REQ_ARRIVAL_TIME, System.currentTimeMillis());
-
-            if (!InboundSourceContext.assertState(nHttpServerConnection, ProtocolState.REQUEST_READY) && !InboundSourceContext.assertState(nHttpServerConnection, ProtocolState.WSDL_RESPONSE_DONE)){
+            HttpContext context = nHttpServerConnection.getContext();
+            if (!InboundSourceContext.assertState(nHttpServerConnection, ProtocolState.REQUEST_READY)
+                    && !InboundSourceContext.assertState(nHttpServerConnection, ProtocolState.WSDL_RESPONSE_DONE)) {
                 handleInvalidState(nHttpServerConnection, "Request received");
                 return;
             }
@@ -100,18 +114,19 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
 
             /******/
             String method = request.getRequest() != null ? request.getRequest().getRequestLine().getMethod().toUpperCase() : "";
-            if ("GET".equals(method) || "HEAD".equals(method)){
-                HttpContext context = request.getConnection().getContext();
-                ContentOutputBuffer outputBuffer = new SimpleOutputBuffer(InboundConstants.SYNAPSE_RESPONSE_BUFFER_SIZE, new HeapByteBufferAllocator());
-                context.setAttribute("synapse.response-source-buffer", outputBuffer);
+            if ("GET".equals(method) || "HEAD".equals(method)) {
+                HttpContext contextGetHEAD = request.getConnection().getContext();
+                ContentOutputBuffer outputBuffer = new SimpleOutputBuffer(InboundConstants.SYNAPSE_RESPONSE_BUFFER_SIZE,
+                        new HeapByteBufferAllocator());
+                contextGetHEAD.setAttribute(SYANPSE_RESPONSE_SOURCE_BUFFER, outputBuffer);
             }
             executorService.execute(
                     new InboundHttpSourceRequestWorker(request, inboundConfiguration, synapseEnvironment));
-        } catch (HttpException e){
+        } catch (HttpException e) {
             log.error(e.getMessage(), e);
             InboundSourceContext.updateState(nHttpServerConnection, ProtocolState.CLOSED);
             inboundConfiguration.getSourceConnections().shutDownConnection(nHttpServerConnection, true);
-        } catch (IOException e){
+        } catch (IOException e) {
             log.error(e.getMessage(), e);
             InboundSourceContext.updateState(nHttpServerConnection, ProtocolState.CLOSED);
             inboundConfiguration.getSourceConnections().shutDownConnection(nHttpServerConnection, true);
@@ -119,7 +134,8 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
     }
 
 
-    public void inputReady(NHttpServerConnection nHttpServerConnection, ContentDecoder contentDecoder) throws IOException, HttpException {
+    public void inputReady(NHttpServerConnection nHttpServerConnection, ContentDecoder contentDecoder)
+            throws IOException, HttpException {
         try {
             ProtocolState protocolState = InboundSourceContext.getState(nHttpServerConnection);
             if (protocolState != ProtocolState.REQUEST_HEAD
@@ -172,7 +188,8 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
         }
     }
 
-    public void outputReady(NHttpServerConnection nHttpServerConnection, ContentEncoder contentEncoder) throws IOException, HttpException {
+    public void outputReady(NHttpServerConnection nHttpServerConnection, ContentEncoder contentEncoder) throws
+            IOException, HttpException {
         try {
             ProtocolState protocolState = InboundSourceContext.getState(nHttpServerConnection);
             //special case to handle WSDLs
@@ -180,7 +197,7 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
                 // we need to shut down if the shutdown flag is set
                 HttpContext context = nHttpServerConnection.getContext();
                 ContentOutputBuffer outBuf = (ContentOutputBuffer) context.getAttribute(
-                        "synapse.response-source-buffer");
+                        SYANPSE_RESPONSE_SOURCE_BUFFER);
                 int bytesWritten = outBuf.produceContent(contentEncoder);
                 nHttpServerConnection.requestInput();
                 if (outBuf instanceof SimpleOutputBuffer && !((SimpleOutputBuffer) outBuf).hasData()) {

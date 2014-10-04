@@ -86,22 +86,22 @@ public class InboundHttpListner implements InboundRequestProcessor {
                     bossGroup.shutdownGracefully();
                     workerGroup.shutdownGracefully();
                 }
-            }},
-            "Inbound Listner");
-            listnerThread.start();
-
             }
+        },
+                "Inbound Listner"
+        );
+        listnerThread.start();
+
+    }
 
     @Override
     public void destroy() {
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
-        if(listnerThread != null){
+        if (listnerThread != null) {
             listnerThread.stop();
         }
     }
-
-
 
 
     public int getPort() {

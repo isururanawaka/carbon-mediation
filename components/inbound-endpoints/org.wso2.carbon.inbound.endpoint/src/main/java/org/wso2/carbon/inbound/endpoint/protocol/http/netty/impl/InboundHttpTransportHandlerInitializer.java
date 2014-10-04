@@ -45,13 +45,12 @@ public class InboundHttpTransportHandlerInitializer extends ChannelInitializer<S
     }
 
     /**
-     *
      * @param ch
      * @throws Exception
      */
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.info("initializing channel pipeline");
         }
         ChannelPipeline p = ch.pipeline();

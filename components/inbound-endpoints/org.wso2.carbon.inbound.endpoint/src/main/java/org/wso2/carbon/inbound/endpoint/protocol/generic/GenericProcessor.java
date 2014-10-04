@@ -1,3 +1,20 @@
+/*
+*  Copyright (c) 2005-2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+*
+*  WSO2 Inc. licenses this file to you under the Apache License,
+*  Version 2.0 (the "License"); you may not use this file except
+*  in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 package org.wso2.carbon.inbound.endpoint.protocol.generic;
 
 import org.apache.commons.logging.Log;
@@ -18,7 +35,7 @@ import java.util.Properties;
 public class GenericProcessor implements InboundRequestProcessor, TaskStartupObserver {
 
 
-	private GenericPollingConsumer pollingConsumer;
+    private GenericPollingConsumer pollingConsumer;
     private String name;
     private Properties properties;
     private long interval;
@@ -28,8 +45,10 @@ public class GenericProcessor implements InboundRequestProcessor, TaskStartupObs
     private static final Log log = LogFactory.getLog(GenericProcessor.class);
     private StartUpController startUpController;
     private String classImpl;
-    
-    public GenericProcessor(String name, String classImpl, Properties properties, long scanInterval, String injectingSeq, String onErrorSeq, SynapseEnvironment synapseEnvironment) {
+    private static final String TASK_GROUP_NAME = "GENERIC-EP";
+
+    public GenericProcessor(String name, String classImpl, Properties properties, long scanInterval,
+                            String injectingSeq, String onErrorSeq, SynapseEnvironment synapseEnvironment) {
         this.name = name;
         this.properties = properties;
         this.interval = scanInterval;
@@ -51,46 +70,48 @@ public class GenericProcessor implements InboundRequestProcessor, TaskStartupObs
     }
 
     public void init() {
-    	log.info("Inbound listener " + name + " for class " + classImpl + " starting ...");
-		try{
-			Class c = Class.forName(classImpl);
-			Constructor cons = c.getConstructor(Properties.class, String.class, SynapseEnvironment.class, long.class, String.class, String.class);
-			pollingConsumer = (GenericPollingConsumer)cons.newInstance(properties, name, synapseEnvironment, interval, injectingSeq, onErrorSeq);
-		}catch(ClassNotFoundException e){
-			log.error("Class " + classImpl + " not found. Please check the required class is added to the classpath.");
-			log.error(e);
-		}catch(NoSuchMethodException e){
-			log.error("Required constructor is not implemented.");
-			log.error(e);
-		}catch(InvocationTargetException e){
-			log.error("Unable to create the consumer");
-			log.error(e);
-		}catch(Exception e){
-			log.error("Unable to create the consumer");
-			log.error(e);					
-		}    	
-    	start();
+        log.info("Inbound listener " + name + " for class " + classImpl + " starting ...");
+        try {
+            Class c = Class.forName(classImpl);
+            Constructor cons = c.getConstructor(Properties.class, String.class, SynapseEnvironment.class,
+                    long.class, String.class, String.class);
+            pollingConsumer = (GenericPollingConsumer) cons.newInstance
+                    (properties, name, synapseEnvironment, interval, injectingSeq, onErrorSeq);
+        } catch (ClassNotFoundException e) {
+            log.error("Class " + classImpl + " not found. Please check the required class is added to the classpath.");
+            log.error(e);
+        } catch (NoSuchMethodException e) {
+            log.error("Required constructor is not implemented.");
+            log.error(e);
+        } catch (InvocationTargetException e) {
+            log.error("Unable to create the consumer");
+            log.error(e);
+        } catch (Exception e) {
+            log.error("Unable to create the consumer");
+            log.error(e);
+        }
+        start();
     }
-    
+
     public void destroy() {
         log.info("Inbound listener ended " + name);
         startUpController.destroy();
     }
-      
-    
-    public void start() {        	
+
+
+    public void start() {
         try {
-        	Task task = new GenericTask(pollingConsumer);
-        	TaskDescription taskDescription = new TaskDescription();
-        	taskDescription.setName(name + "-GENERIC-EP");
-        	taskDescription.setTaskGroup("GENERIC-EP");
-        	taskDescription.setInterval(interval);
-        	taskDescription.setIntervalInMs(true);
-        	taskDescription.addResource(TaskDescription.INSTANCE, task);
-        	taskDescription.addResource(TaskDescription.CLASSNAME, task.getClass().getName());
-        	startUpController = new StartUpController();
-        	startUpController.setTaskDescription(taskDescription);
-        	startUpController.init(synapseEnvironment);
+            Task task = new GenericTask(pollingConsumer);
+            TaskDescription taskDescription = new TaskDescription();
+            taskDescription.setName(name + "-" + TASK_GROUP_NAME);
+            taskDescription.setTaskGroup(TASK_GROUP_NAME);
+            taskDescription.setInterval(interval);
+            taskDescription.setIntervalInMs(true);
+            taskDescription.addResource(TaskDescription.INSTANCE, task);
+            taskDescription.addResource(TaskDescription.CLASSNAME, task.getClass().getName());
+            startUpController = new StartUpController();
+            startUpController.setTaskDescription(taskDescription);
+            startUpController.init(synapseEnvironment);
 
         } catch (Exception e) {
             log.error("Could not start Generic Processor. Error starting up scheduler. Error: " + e.getLocalizedMessage());
@@ -105,8 +126,8 @@ public class GenericProcessor implements InboundRequestProcessor, TaskStartupObs
         this.name = name;
     }
 
-	public void update() {
-		start();
-	}
+    public void update() {
+        start();
+    }
 
 }

@@ -63,7 +63,8 @@ public class InboundHttpSourceResponseWorker implements InboundResponseSender {
            try{
                 if (messageContext != null) {
 
-                    org.apache.axis2.context.MessageContext msgContext = ((Axis2MessageContext) messageContext).getAxis2MessageContext();
+                    org.apache.axis2.context.MessageContext msgContext = ((Axis2MessageContext) messageContext).
+                            getAxis2MessageContext();
 
                     InboundConfiguration sourceConfiguration = (InboundConfiguration) msgContext.getProperty(
                             InboundConstants.HTTP_INBOUND_SOURCE_CONFIGURATION);
@@ -81,7 +82,6 @@ public class InboundHttpSourceResponseWorker implements InboundResponseSender {
 
                     InboundHttpSourceResponse sourceResponse = InboundSourceResponseFactory.create(msgContext,
                             sourceRequest, sourceConfiguration);
-                    //  sourceResponse.checkResponseChunkDisable(msgContext);
 
                     InboundSourceContext.setResponse(conn, sourceResponse);
 
@@ -119,18 +119,17 @@ public class InboundHttpSourceResponseWorker implements InboundResponseSender {
                             noEntityBodyResponse = true;
                         }
 
-                        if (!noEntityBodyResponse && msgContext.isPropertyTrue(PassThroughConstants.MESSAGE_BUILDER_INVOKED) && pipe != null) {
+                        if (!noEntityBodyResponse && msgContext.isPropertyTrue
+                                (PassThroughConstants.MESSAGE_BUILDER_INVOKED) && pipe != null) {
                             OutputStream out = pipe.getOutputStream();
-                /*if (msgContext.isPropertyTrue(NhttpConstants.SC_ACCEPTED)) {
-                    out.write(new byte[0]);
-                }else {*/
+
 
                             //This is to support MTOM in response path for requests sent without a SOAPAction. The reason is
                             //axis2 selects application/xml formatter as the formatter for formatting the ESB to client response
                             //when there is no SOAPAction.
                             if (Constants.VALUE_TRUE.equals(msgContext.getProperty(Constants.Configuration.ENABLE_MTOM))) {
-                                msgContext.setProperty(Constants.Configuration.CONTENT_TYPE, PassThroughConstants.CONTENT_TYPE_MULTIPART_RELATED);
-                                msgContext.setProperty(Constants.Configuration.MESSAGE_TYPE, PassThroughConstants.CONTENT_TYPE_MULTIPART_RELATED);
+      msgContext.setProperty(Constants.Configuration.CONTENT_TYPE, PassThroughConstants.CONTENT_TYPE_MULTIPART_RELATED);
+      msgContext.setProperty(Constants.Configuration.MESSAGE_TYPE, PassThroughConstants.CONTENT_TYPE_MULTIPART_RELATED);
                             }
 
                             MessageFormatter formatter = MessageFormatterDecoratorFactory.createMessageFormatterDecorator(msgContext);
@@ -167,7 +166,7 @@ public class InboundHttpSourceResponseWorker implements InboundResponseSender {
                             }
 
                             formatter.writeTo(msgContext, format, out, false);
-                /*}*/
+
                             pipe.setSerializationComplete(true);
                             out.close();
                         }

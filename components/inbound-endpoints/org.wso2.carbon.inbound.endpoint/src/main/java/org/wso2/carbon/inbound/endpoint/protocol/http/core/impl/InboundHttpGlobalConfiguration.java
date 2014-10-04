@@ -1,3 +1,21 @@
+/*
+*  Copyright (c) 2005-2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+*
+*  WSO2 Inc. licenses this file to you under the Apache License,
+*  Version 2.0 (the "License"); you may not use this file except
+*  in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
+
 package org.wso2.carbon.inbound.endpoint.protocol.http.core.impl;
 
 
@@ -14,7 +32,10 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/**
+ * class responsible for provide and register
+ * IOReactor,inboundConfiuration, response worker, and handler maps.
+ */
 public class InboundHttpGlobalConfiguration {
     private static Logger log = Logger.getLogger(InboundHttpGlobalConfiguration.class);
     private static final Map<Integer, InboundHttpSourceHandler> inboundHttpSourceHandlerMap = new HashMap<Integer, InboundHttpSourceHandler>();
@@ -23,7 +44,10 @@ public class InboundHttpGlobalConfiguration {
     private static DefaultListeningIOReactor ioReactor;
     private static boolean isIOReactorStarted;
     private static InboundConfiguration inboundConfiguration;
-    ;
+    private static InboundHttpSourceResponseWorker inboundHttpSourceResponseWorker;
+    private static final String INBOUND_THREAD_GROUP="Inbound http thread group";
+    private static final String INBOUND_THREAD_FACTORY="Inbound http core impl thread factory";
+
 
 
     public static Map<Integer, InboundHttpSourceHandler> getInboundHttpSourceHandlerMap() {
@@ -46,7 +70,10 @@ public class InboundHttpGlobalConfiguration {
         return multiListnerIODispatch;
     }
 
-
+    /**
+     * start the IO Reactor if it not started else provide already used ioreactor.
+     * @return
+     */
     public static DefaultListeningIOReactor startIoReactor() {
         if (!isIOReactorStarted) {
             if (inboundConfiguration == null) {
@@ -55,7 +82,7 @@ public class InboundHttpGlobalConfiguration {
             try {
                 ioReactor = new DefaultListeningIOReactor(
                         inboundConfiguration.buildIOReactorConfig(),
-                        new NativeThreadFactory(new ThreadGroup("Inbound http thread group"), "Inbound http core impl"));
+                        new NativeThreadFactory(new ThreadGroup(INBOUND_THREAD_GROUP),INBOUND_THREAD_FACTORY ));
 
                 ioReactor.setExceptionHandler(new IOReactorExceptionHandler() {
 
@@ -110,6 +137,10 @@ public class InboundHttpGlobalConfiguration {
         return ioReactor;
     }
 
+    /**
+     * starting endpoints for each ports
+     * @param inetSocketAddress
+     */
     public static void startEndpoint(InetSocketAddress inetSocketAddress)  {
         ListenerEndpoint endpoint = null;
         if (ioReactor != null) {
@@ -140,6 +171,11 @@ public class InboundHttpGlobalConfiguration {
         }
     }
 
+    /**
+     * Take inbound endpoint bounded to port and undeploy it.
+     * if no more inbound endpoints registered shutdown io reactor.
+     * @param port
+     */
     public static void closeEndpoint(int port)  {
         if (listenerEndpointMap.get(port) != null) {
             listenerEndpointMap.get(port).close();
@@ -165,5 +201,11 @@ public class InboundHttpGlobalConfiguration {
         return isIOReactorStarted;
     }
 
-
+    public static InboundHttpSourceResponseWorker getInboundHttpSourceResponseWorker() {
+        if(inboundHttpSourceResponseWorker==null){
+            inboundHttpSourceResponseWorker= new InboundHttpSourceResponseWorker();
+            return  inboundHttpSourceResponseWorker;
+        }
+        return inboundHttpSourceResponseWorker;
+    }
 }

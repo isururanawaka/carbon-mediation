@@ -38,13 +38,16 @@ public class JMSUtils {
                 Properties initialContextProperties = new Properties();
                 if (context.getEnvironment() != null) {
                     if (context.getEnvironment().get(JMSConstants.JAVA_INITIAL_NAMING_FACTORY) != null) {
-                        initialContextProperties.put(JMSConstants.JAVA_INITIAL_NAMING_FACTORY, context.getEnvironment().get(JMSConstants.JAVA_INITIAL_NAMING_FACTORY));
+                        initialContextProperties.put(JMSConstants.JAVA_INITIAL_NAMING_FACTORY, context.getEnvironment().
+                                get(JMSConstants.JAVA_INITIAL_NAMING_FACTORY));
                     }
                     if (context.getEnvironment().get(JMSConstants.CONNECTION_FACTORY_JNDI_NAME) != null) {
-                        initialContextProperties.put(JMSConstants.CONNECTION_FACTORY_JNDI_NAME, context.getEnvironment().get(JMSConstants.CONNECTION_FACTORY_JNDI_NAME));
+                        initialContextProperties.put(JMSConstants.CONNECTION_FACTORY_JNDI_NAME, context.getEnvironment().
+                                get(JMSConstants.CONNECTION_FACTORY_JNDI_NAME));
                     }
                     if(context.getEnvironment().get(JMSConstants.JAVA_NAMING_PROVIDER_URL) != null){
-                        initialContextProperties.put(JMSConstants.JAVA_NAMING_PROVIDER_URL, context.getEnvironment().get(JMSConstants.JAVA_NAMING_PROVIDER_URL));
+                        initialContextProperties.put(JMSConstants.JAVA_NAMING_PROVIDER_URL, context.getEnvironment().
+                                get(JMSConstants.JAVA_NAMING_PROVIDER_URL));
                     }
                 }
 

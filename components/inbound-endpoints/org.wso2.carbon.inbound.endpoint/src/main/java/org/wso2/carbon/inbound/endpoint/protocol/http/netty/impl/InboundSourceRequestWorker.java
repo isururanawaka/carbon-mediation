@@ -84,7 +84,8 @@ public class InboundSourceRequestWorker implements Runnable {
                 if (inboundSourceRequest.getInjectSeq() == null || inboundSourceRequest.getInjectSeq().equals("")) {
                     log.error("Sequence name not specified. Sequence : " + inboundSourceRequest.getInjectSeq());
                 }
-                SequenceMediator seq = (SequenceMediator) inboundSourceRequest.getSynapseEnvironment().getSynapseConfiguration().getSequence(inboundSourceRequest.getInjectSeq());
+                SequenceMediator seq = (SequenceMediator) inboundSourceRequest.getSynapseEnvironment().
+                        getSynapseConfiguration().getSequence(inboundSourceRequest.getInjectSeq());
                 seq.setErrorHandler(inboundSourceRequest.getFaultSeq());
                 if (seq != null) {
                     if (log.isDebugEnabled()) {

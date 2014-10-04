@@ -1,4 +1,3 @@
-package org.wso2.carbon.inbound.endpoint.protocol.jms;
 /*
 * Copyright 2004,2005 The Apache Software Foundation.
 *
@@ -15,6 +14,9 @@ package org.wso2.carbon.inbound.endpoint.protocol.jms;
 * limitations under the License.
 */
 
+package org.wso2.carbon.inbound.endpoint.protocol.jms;
+
+
 import org.apache.axiom.attachments.SizeAwareDataSource;
 
 import javax.jms.BytesMessage;
@@ -25,7 +27,7 @@ import java.io.OutputStream;
 
 /**
  * Data source implementation wrapping a JMS {@link javax.jms.BytesMessage}.
- * <p>
+ * <p/>
  * Note that two input streams created by the same instance of this
  * class can not be used at the same time.
  */
@@ -37,7 +39,7 @@ public class BytesMessageDataSource implements SizeAwareDataSource {
         this.message = message;
         this.contentType = contentType;
     }
-    
+
     public BytesMessageDataSource(BytesMessage message) {
         this(message, "application/octet-stream");
     }

@@ -36,6 +36,7 @@ import java.util.Map;
 
 /**
  * wrapping class of InboundHttpSourceHandler
+ * dispatch requests according to port to for registered handlers.
  */
 public class MultiListnerIODispatch extends
         AbstractIODispatch<DefaultNHttpServerConnection> {

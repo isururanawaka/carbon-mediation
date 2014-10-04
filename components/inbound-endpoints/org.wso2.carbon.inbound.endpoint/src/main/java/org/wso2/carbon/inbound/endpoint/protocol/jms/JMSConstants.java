@@ -22,7 +22,9 @@ import javax.xml.namespace.QName;
 
 public class JMSConstants {
 
-    public static enum JMSDestinationType {QUEUE, TOPIC};
+    public static enum JMSDestinationType {QUEUE, TOPIC}
+
+    ;
     public static final String TOPIC_PREFIX = "topic.";
     public static final String QUEUE_PREFIX = "queue.";
 
@@ -37,48 +39,71 @@ public class JMSConstants {
     public static final String DESTINATION_TYPE_TOPIC = "topic";
     public static String SESSION_TRANSACTED = "transport.jms.SessionTransacted";
     public static String SESSION_ACK = "transport.jms.SessionAcknowledgement";
-    /**Namespace for JMS map payload representation*/
-    public static final String JMS_MAP_NS = "http://axis.apache.org/axis2/java/transports/jms/map-payload";    
-    /**Root element name of JMS Map message payload representation */
+    /**
+     * Namespace for JMS map payload representation
+     */
+    public static final String JMS_MAP_NS = "http://axis.apache.org/axis2/java/transports/jms/map-payload";
+    /**
+     * Root element name of JMS Map message payload representation
+     */
     public static final String JMS_MAP_ELEMENT_NAME = "JMSMap";
     public static final String SET_ROLLBACK_ONLY = "SET_ROLLBACK_ONLY";
-    public static final QName JMS_MAP_QNAME = new QName(JMS_MAP_NS, JMS_MAP_ELEMENT_NAME,"");
+    public static final QName JMS_MAP_QNAME = new QName(JMS_MAP_NS, JMS_MAP_ELEMENT_NAME, "");
 
     public static final String PARAM_CACHE_LEVEL = "transport.jms.CacheLevel";
 
     public static final String PARAM_JMS_USERNAME = "transport.jms.UserName";
-    /** The password to use when obtaining a JMS Connection */
+    /**
+     * The password to use when obtaining a JMS Connection
+     */
     public static final String PARAM_JMS_PASSWORD = "transport.jms.Password";
-    /** The parameter indicating the JMS API specification to be used - if this is "1.1" the JMS
+    /**
+     * The parameter indicating the JMS API specification to be used - if this is "1.1" the JMS
      * 1.1 API would be used, else the JMS 1.0.2B
      */
     public static final String PARAM_JMS_SPEC_VER = "transport.jms.JMSSpecVersion";
     /**
      * Maximum number of shared JMS Connections when sending messages out
-     * */
+     */
     public static final String MAX_JMS_CONNECTIONS = "transport.jms.MaxJMSConnections";
 
     public static final String MAX_JMS_SESSIONS = "transport.jms.MaxJMSSessions";
-    
+
     public static final String PARAM_SUB_DURABLE = "transport.jms.SubscriptionDurable";
-    /** The name for the durable subscription See {@link PARAM_SUB_DURABLE}*/
-    public static final String PARAM_DURABLE_SUB_NAME = "transport.jms.DurableSubscriberName";    
-    public static final String PARAM_DURABLE_SUB_CLIENT_ID =  "transport.jms.DurableSubscriberClientID";
-    
-    /** A message selector to be used when messages are sought for this service */
-    public static final String PARAM_MSG_SELECTOR = "transport.jms.MessageSelector";    
-    
-    /** Do not cache any JMS resources between tasks (when sending) or JMS CF's (when sending) */
+    /**
+     * The name for the durable subscription See {@link PARAM_SUB_DURABLE}
+     */
+    public static final String PARAM_DURABLE_SUB_NAME = "transport.jms.DurableSubscriberName";
+    public static final String PARAM_DURABLE_SUB_CLIENT_ID = "transport.jms.DurableSubscriberClientID";
+
+    /**
+     * A message selector to be used when messages are sought for this service
+     */
+    public static final String PARAM_MSG_SELECTOR = "transport.jms.MessageSelector";
+
+    /**
+     * Do not cache any JMS resources between tasks (when sending) or JMS CF's (when sending)
+     */
     public static final int CACHE_NONE = 0;
-    /** Cache only the JMS connection between tasks (when receiving), or JMS CF's (when sending)*/
+    /**
+     * Cache only the JMS connection between tasks (when receiving), or JMS CF's (when sending)
+     */
     public static final int CACHE_CONNECTION = 1;
-    /** Cache only the JMS connection and Session between tasks (receiving), or JMS CF's (sending) */
+    /**
+     * Cache only the JMS connection and Session between tasks (receiving), or JMS CF's (sending)
+     */
     public static final int CACHE_SESSION = 2;
-    /** Cache the JMS connection, Session and Consumer between tasks when receiving*/
+    /**
+     * Cache the JMS connection, Session and Consumer between tasks when receiving
+     */
     public static final int CACHE_CONSUMER = 3;
-    /** Cache the JMS connection, Session and Producer within a JMSConnectionFactory when sending */
+    /**
+     * Cache the JMS connection, Session and Producer within a JMSConnectionFactory when sending
+     */
     public static final int CACHE_PRODUCER = 4;
-    /** automatic choice of an appropriate caching level (depending on the transaction strategy) */
+    /**
+     * automatic choice of an appropriate caching level (depending on the transaction strategy)
+     */
     public static final int CACHE_AUTO = 5;
 
 

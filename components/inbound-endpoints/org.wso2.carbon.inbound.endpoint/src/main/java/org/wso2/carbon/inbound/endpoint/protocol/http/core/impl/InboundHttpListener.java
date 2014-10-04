@@ -54,9 +54,13 @@ public class InboundHttpListener implements InboundRequestProcessor {
 
     }
 
+    /**
+     *calls when inbound endpoint inits by the synapse deployer
+     */
     @Override
     public void init() {
-        InboundHttpSourceHandler inboundHttpSourceHandler = new InboundHttpSourceHandler(this.inboundConfiguration, synapseEnvironment, injectingSequence, onErrorSequence);
+        InboundHttpSourceHandler inboundHttpSourceHandler = new InboundHttpSourceHandler
+                (this.inboundConfiguration, synapseEnvironment, injectingSequence, onErrorSequence);
         InboundHttpGlobalConfiguration.addInboundHttpSourceHandler(Integer.parseInt(this.port),inboundHttpSourceHandler);
         start();
     }

@@ -34,11 +34,11 @@ public class CachedJMSConnectionFactory extends JMSConnectionFactory {
     private Connection cachedConnection = null;
     private Session cachedSession = null;
     private MessageConsumer cachedMessageConsumer = null;
-    
+
     public CachedJMSConnectionFactory(Properties properties) {
         super(properties);
         String cacheLevel = properties.getProperty(JMSConstants.PARAM_CACHE_LEVEL);
-        if(null != cacheLevel && !"".equals(cacheLevel)) {
+        if (null != cacheLevel && !"".equals(cacheLevel)) {
             this.cacheLevel = Integer.parseInt(cacheLevel);
         } else {
             this.cacheLevel = JMSConstants.CACHE_NONE;
@@ -50,35 +50,35 @@ public class CachedJMSConnectionFactory extends JMSConnectionFactory {
         return super.getConnectionFactory();
     }
 
-    public Connection getConnection(String userName, String password) { 
-    	Connection connection = null;
+    public Connection getConnection(String userName, String password) {
+        Connection connection = null;
         if (cachedConnection == null) {
-        	connection = createConnection(userName, password);
-        }else{
-        	connection = cachedConnection;
+            connection = createConnection(userName, password);
+        } else {
+            connection = cachedConnection;
         }
-        if(connection == null){
-        	return null;
+        if (connection == null) {
+            return null;
         }
         try {
-        	connection.start();
+            connection.start();
         } catch (JMSException e) {
             logger.error("JMS Exception while starting connection for factory '" + this.connectionFactoryString + "' " + e.getMessage());
             resetCache();
-        }        
+        }
         return connection;
     }
 
     @Override
-    public Connection createConnection(String userName, String password){
+    public Connection createConnection(String userName, String password) {
         Connection connection = null;
-        if(userName == null || password == null){
-        	connection = super.createConnection();
-        }else{
-        	connection = super.createConnection(userName, password);
+        if (userName == null || password == null) {
+            connection = super.createConnection();
+        } else {
+            connection = super.createConnection(userName, password);
         }
-        if(this.cacheLevel >= JMSConstants.CACHE_CONNECTION){
-        	cachedConnection = connection;
+        if (this.cacheLevel >= JMSConstants.CACHE_CONNECTION) {
+            cachedConnection = connection;
         }
         return connection;
     }
@@ -87,43 +87,43 @@ public class CachedJMSConnectionFactory extends JMSConnectionFactory {
     public Session getSession(Connection connection) {
         if (cachedSession == null) {
             return createSession(connection);
-        }else{
-        	return cachedSession;
-        }      
+        } else {
+            return cachedSession;
+        }
     }
 
     @Override
     protected Session createSession(Connection connection) {
         Session session = super.createSession(connection);
-        if(this.cacheLevel >= JMSConstants.CACHE_SESSION){
-        	cachedSession = session;
+        if (this.cacheLevel >= JMSConstants.CACHE_SESSION) {
+            cachedSession = session;
         }
         return session;
     }
 
-    public MessageConsumer getMessageConsumer(Session session, Destination destination) { 
-    	MessageConsumer  messageConsumer = null;
+    public MessageConsumer getMessageConsumer(Session session, Destination destination) {
+        MessageConsumer messageConsumer = null;
         if (cachedMessageConsumer == null) {
-        	messageConsumer = createMessageConsumer(session, destination);
-        }else{
-        	messageConsumer = cachedMessageConsumer;
-        }    
-        return messageConsumer;
-    }    
-
-    public MessageConsumer createMessageConsumer(Session session, Destination destination) { 
-    	MessageConsumer  messageConsumer = super.createMessageConsumer(session, destination);
-        if(this.cacheLevel >= JMSConstants.CACHE_CONSUMER){
-        	cachedMessageConsumer = messageConsumer;
+            messageConsumer = createMessageConsumer(session, destination);
+        } else {
+            messageConsumer = cachedMessageConsumer;
         }
         return messageConsumer;
-    } 
-    
+    }
+
+    public MessageConsumer createMessageConsumer(Session session, Destination destination) {
+        MessageConsumer messageConsumer = super.createMessageConsumer(session, destination);
+        if (this.cacheLevel >= JMSConstants.CACHE_CONSUMER) {
+            cachedMessageConsumer = messageConsumer;
+        }
+        return messageConsumer;
+    }
+
     public boolean closeConnection() {
         try {
-        	if(cachedConnection != null){
-        		cachedConnection.close();
-        	}
+            if (cachedConnection != null) {
+                cachedConnection.close();
+            }
             return true;
         } catch (JMSException e) {
             logger.error("JMS Exception while closing the connection.");
@@ -133,58 +133,61 @@ public class CachedJMSConnectionFactory extends JMSConnectionFactory {
 
     public boolean closeConnection(Connection connection) {
         try {
-            if(this.cacheLevel < JMSConstants.CACHE_CONNECTION){
-            	connection.close();
+            if (this.cacheLevel < JMSConstants.CACHE_CONNECTION) {
+                connection.close();
             }
         } catch (JMSException e) {
             logger.error("JMS Exception while closing the connection.");
         }
         return false;
-    }    
+    }
 
     public boolean closeConsumer(MessageConsumer messageConsumer) {
         try {
-            if(this.cacheLevel < JMSConstants.CACHE_CONSUMER){
-            	messageConsumer.close();
+            if (this.cacheLevel < JMSConstants.CACHE_CONSUMER) {
+                messageConsumer.close();
             }
         } catch (JMSException e) {
             logger.error("JMS Exception while closing the consumer.");
         }
         return false;
-    }     
+    }
 
     public boolean closeSession(Session session) {
         try {
-            if(this.cacheLevel < JMSConstants.CACHE_SESSION){
-            	session.close();
+            if (this.cacheLevel < JMSConstants.CACHE_SESSION) {
+                session.close();
             }
         } catch (JMSException e) {
             logger.error("JMS Exception while closing the consumer.");
         }
         return false;
-    }     
-    
-    private void resetCache(){
-    	if(cachedConnection != null){
-    		try{
-    			cachedConnection.close();
-    		}catch(JMSException e){}
-    		cachedConnection = null;
-    	}
-    	if(cachedSession != null){
-    		try{
-    			cachedSession.close();
-    		}catch(JMSException e){}
-    		cachedSession = null;
-    	}    
-    	if(cachedMessageConsumer != null){
-    		try{
-    			cachedMessageConsumer.close();
-    		}catch(JMSException e){}
-    		cachedMessageConsumer = null;
-    	}      	
     }
-    
+
+    private void resetCache() {
+        if (cachedConnection != null) {
+            try {
+                cachedConnection.close();
+            } catch (JMSException e) {
+            }
+            cachedConnection = null;
+        }
+        if (cachedSession != null) {
+            try {
+                cachedSession.close();
+            } catch (JMSException e) {
+            }
+            cachedSession = null;
+        }
+        if (cachedMessageConsumer != null) {
+            try {
+                cachedMessageConsumer.close();
+            } catch (JMSException e) {
+            }
+            cachedMessageConsumer = null;
+        }
+    }
+
     public JMSConstants.JMSDestinationType getDestinationType() {
         return this.destinationType;
     }

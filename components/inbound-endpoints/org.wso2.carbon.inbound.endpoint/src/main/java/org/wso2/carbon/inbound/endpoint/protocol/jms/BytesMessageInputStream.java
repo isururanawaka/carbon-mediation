@@ -57,7 +57,7 @@ public class BytesMessageInputStream extends InputStream {
             byte[] b2 = new byte[len];
             int c = read(b2);
             if (c > 0) {
-                System.arraycopy(b2, 0, b, off, c); 
+                System.arraycopy(b2, 0, b, off, c);
             }
             return c;
         }

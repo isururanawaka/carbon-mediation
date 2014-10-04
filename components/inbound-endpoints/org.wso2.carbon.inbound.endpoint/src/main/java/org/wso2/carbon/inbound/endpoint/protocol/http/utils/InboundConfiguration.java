@@ -73,7 +73,8 @@ private HttpResponseFactory httpResponseFactory;
                 setParameter(HttpProtocolParams.USER_AGENT,
                         conf.getStringProperty(HttpProtocolParams.USER_AGENT, "Synapse-PT-HttpComponents-NIO")).
                 setParameter(HttpProtocolParams.HTTP_ELEMENT_CHARSET,
-                        conf.getStringProperty(HttpProtocolParams.HTTP_ELEMENT_CHARSET, HTTP.DEFAULT_PROTOCOL_CHARSET));//TODO:This does not works with HTTPCore 4.3
+                        conf.getStringProperty(HttpProtocolParams.HTTP_ELEMENT_CHARSET, HTTP.DEFAULT_PROTOCOL_CHARSET));
+                        //TODO:This does not works with HTTPCore 4.3
 
         return params;
     }

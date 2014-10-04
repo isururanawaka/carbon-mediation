@@ -79,7 +79,10 @@ public class InboundHttpSourceRequestWorker implements Runnable {
 
     private SynapseEnvironment synapseEnvironment;
 
-    public InboundHttpSourceRequestWorker(InboundHttpSourceRequest inboundSourceRequest, InboundConfiguration inboundConfiguration, SynapseEnvironment synapseEnvironment) {
+    private static final String SKIP = "SKIP";
+
+    public InboundHttpSourceRequestWorker(InboundHttpSourceRequest inboundSourceRequest,
+                                          InboundConfiguration inboundConfiguration, SynapseEnvironment synapseEnvironment) {
         this.synapseEnvironment = synapseEnvironment;
         this.request = inboundSourceRequest;
         this.sourceConfiguration = inboundConfiguration;
@@ -97,10 +100,13 @@ public class InboundHttpSourceRequestWorker implements Runnable {
             messageContext.setProperty(InboundConstants.HTTP_INBOUND_SOURCE_CONNECTION,
                     request.getConnection());
             messageContext.setProperty(InboundEndpointConstants.INBOUND_ENDPOINT_RESPONSE_WORKER,
-                                                   InboundHttpSourceResponseWorker.getInstance());
-            msgCtx.setProperty(SynapseConstants.IS_INBOUND,true);
+                    InboundHttpSourceResponseWorker.getInstance());
+            msgCtx.setProperty(SynapseConstants.IS_INBOUND, true);
+            msgCtx.setProperty(InboundEndpointConstants.INBOUND_ENDPOINT_RESPONSE_WORKER,
+                    InboundHttpGlobalConfiguration.getInboundHttpSourceResponseWorker());
             msgCtx.setWSAAction(request.getHeaders().get(InboundConstants.SOAP_ACTION));
-            SequenceMediator seq = (SequenceMediator) synapseEnvironment.getSynapseConfiguration().getSequence(request.getInjectSeq());
+            SequenceMediator seq = (SequenceMediator) synapseEnvironment.getSynapseConfiguration().
+                    getSequence(request.getInjectSeq());
             seq.setErrorHandler(request.getFaultSeq());
             if (seq != null) {
                 if (log.isDebugEnabled()) {
@@ -113,7 +119,7 @@ public class InboundHttpSourceRequestWorker implements Runnable {
                 processEntityEnclosingRequest(messageContext);
 
             } else {
-                processNonEntityEnclosing(null,messageContext);
+                processNonEntityEnclosing(null, messageContext);
             }
             synapseEnvironment.injectAsync(msgCtx, seq);
             sendAck(messageContext);
@@ -122,7 +128,7 @@ public class InboundHttpSourceRequestWorker implements Runnable {
         }
     }
 
-    private void processNonEntityEnclosing(SOAPEnvelope soapEnvelope,MessageContext msgContext) {
+    private void processNonEntityEnclosing(SOAPEnvelope soapEnvelope, MessageContext msgContext) {
         String soapAction = request.getHeaders().get(SOAP_ACTION_HEADER);
         if ((soapAction != null) && soapAction.startsWith("\"") && soapAction.endsWith("\"")) {
             soapAction = soapAction.substring(1, soapAction.length() - 1);
@@ -131,13 +137,13 @@ public class InboundHttpSourceRequestWorker implements Runnable {
         msgContext.setTo(new EndpointReference(request.getUri()));
         msgContext.setServerSide(true);
         msgContext.setDoingREST(true);
-        if(!request.isEntityEnclosing()){
+        if (!request.isEntityEnclosing()) {
             msgContext.setProperty(PassThroughConstants.NO_ENTITY_BODY, Boolean.TRUE);
         }
         try {
-            if(soapEnvelope == null){
+            if (soapEnvelope == null) {
                 msgContext.setEnvelope(new SOAP11Factory().getDefaultEnvelope());
-            }else{
+            } else {
                 msgContext.setEnvelope(soapEnvelope);
             }
 
@@ -146,6 +152,7 @@ public class InboundHttpSourceRequestWorker implements Runnable {
                     " request for : " + request.getUri(), axisFault);
         }
     }
+
     private org.apache.synapse.MessageContext createMessageContext(InboundHttpSourceRequest inboundSourceRequest) {
         org.apache.synapse.MessageContext msgCtx = synapseEnvironment.createMessageContext();
         MessageContext axis2MsgCtx = ((org.apache.synapse.core.axis2.Axis2MessageContext) msgCtx).getAxis2MessageContext();
@@ -288,11 +295,11 @@ public class InboundHttpSourceRequestWorker implements Runnable {
         }
 
         if (msgContext.getProperty(PassThroughConstants.FORCE_SOAP_FAULT) != null) {
-            respWritten = "SKIP";
+            respWritten = SKIP;
         }
 
         boolean respWillFollow = !Constants.VALUE_TRUE.equals(respWritten)
-                && !"SKIP".equals(respWritten);
+                && !SKIP.equals(respWritten);
         boolean ack = (((RequestResponseTransport) msgContext.getProperty(
                 RequestResponseTransport.TRANSPORT_CONTROL)).getStatus()
                 == RequestResponseTransport.RequestResponseTransportStatus.ACKED);

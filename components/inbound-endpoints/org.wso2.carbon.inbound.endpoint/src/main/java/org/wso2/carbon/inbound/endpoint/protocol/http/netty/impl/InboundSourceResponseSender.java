@@ -52,11 +52,10 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * Sends responses to requests that are sent to the InboundEndpoint
  */
 
-public class InboundSourceResponseSender implements InboundResponseSender{
+public class InboundSourceResponseSender implements InboundResponseSender {
 
 
     private Logger logger = Logger.getLogger(InboundSourceResponseSender.class);
-
 
 
     private FullHttpResponse getHttpResponse(SOAPEnvelope soapEnvelope, String ContentType) {
@@ -74,7 +73,7 @@ public class InboundSourceResponseSender implements InboundResponseSender{
         try {
             bytes = IOUtils.toByteArray(inputStream);
         } catch (IOException e) {
-           logger.info(e.getMessage());
+            logger.info(e.getMessage());
         }
         ;
         ByteBuf CONTENT = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(bytes));
@@ -85,10 +84,6 @@ public class InboundSourceResponseSender implements InboundResponseSender{
         return response;
 
     }
-
-
-
-
 
 
     private SOAPEnvelope toSOAPENV(InputStream inputStream, int version) throws XMLStreamException {
@@ -110,8 +105,8 @@ public class InboundSourceResponseSender implements InboundResponseSender{
             return soapEnvelope;
 
         } catch (XMLStreamException e) {
-           logger.error("Error creating a OMElement from an input stream : ",
-                   e);
+            logger.error("Error creating a OMElement from an input stream : ",
+                    e);
             throw new XMLStreamException(e);
         }
     }
@@ -123,14 +118,15 @@ public class InboundSourceResponseSender implements InboundResponseSender{
         ChannelHandlerContext ctx = (ChannelHandlerContext) smc.getProperty(InboundConstants.CHANNEL_HANDLER_CONTEXT);
         //Retrieve the SOAP envelope from the MessageContext
         SOAPEnvelope envelope = smc.getEnvelope();
-        String contentType = (String) ((Axis2MessageContext) smc).getAxis2MessageContext().getProperty(InboundConstants.CONTENT_TYPE);
+        String contentType = (String) ((Axis2MessageContext) smc).getAxis2MessageContext().
+                getProperty(InboundConstants.CONTENT_TYPE);
         if (envelope.getBody().getFirstElement() == null) {
-            Pipe pipe = (Pipe) ((Axis2MessageContext) smc).getAxis2MessageContext().getProperty(InboundConstants.PASS_THROUGH_TARGET_BUFFER);
+            Pipe pipe = (Pipe) ((Axis2MessageContext) smc).getAxis2MessageContext().
+                    getProperty(InboundConstants.PASS_THROUGH_TARGET_BUFFER);
             FullHttpResponse fullHttpResponse = getHttpResponseFrombyte(pipe.getInputStream(), contentType);
             //Send the envelope using the ChannelHandlerContext
             ctx.writeAndFlush(fullHttpResponse);
-        }
-        else {
+        } else {
             FullHttpResponse fullHttpResponse = getHttpResponse(envelope, contentType);
             //Send the envelope using the ChannelHandlerContext
             ctx.writeAndFlush(fullHttpResponse);

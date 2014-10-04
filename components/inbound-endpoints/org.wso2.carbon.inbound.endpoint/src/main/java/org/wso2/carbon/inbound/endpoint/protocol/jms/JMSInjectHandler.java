@@ -96,9 +96,11 @@ public class JMSInjectHandler {
             	documentElement = builder.processDocument(in, contentType, axis2MsgCtx);
             } else if (msg instanceof BytesMessage){
                 if (builder instanceof DataSourceMessageBuilder) {
-                    documentElement = ((DataSourceMessageBuilder)builder).processDocument(new BytesMessageDataSource((BytesMessage)msg), contentType, axis2MsgCtx);
+                    documentElement = ((DataSourceMessageBuilder)builder).processDocument
+                            (new BytesMessageDataSource((BytesMessage)msg), contentType, axis2MsgCtx);
                 } else {
-                    documentElement = builder.processDocument( new BytesMessageInputStream((BytesMessage)msg), contentType, axis2MsgCtx);
+                    documentElement = builder.processDocument
+                            ( new BytesMessageInputStream((BytesMessage)msg), contentType, axis2MsgCtx);
                 }            	
             } else if (msg instanceof MapMessage) {
             	documentElement = convertJMSMapToXML((MapMessage) msg);

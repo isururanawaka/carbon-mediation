@@ -50,6 +50,7 @@ public class InboundHttpTransportSourceHandler extends ChannelInboundHandlerAdap
 
     /**
      * activating registerd hndler to accept events.
+     *
      * @param ctx
      * @throws Exception
      */
@@ -60,6 +61,7 @@ public class InboundHttpTransportSourceHandler extends ChannelInboundHandlerAdap
 
     /**
      * reciving events through netty.
+     *
      * @param ctx
      * @param msg
      * @throws Exception
@@ -73,7 +75,7 @@ public class InboundHttpTransportSourceHandler extends ChannelInboundHandlerAdap
             for (String val : headers.names()) {
                 inboundSourceRequest.addHttpheaders(val, headers.get(val));
             }
-           inboundSourceRequest.setTo(fullHttpRequest.getUri());
+            inboundSourceRequest.setTo(fullHttpRequest.getUri());
             ByteBuf buf = fullHttpRequest.content();
             byte[] bytes = new byte[buf.readableBytes()];
             buf.readBytes(bytes);
