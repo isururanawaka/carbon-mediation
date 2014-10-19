@@ -1,27 +1,23 @@
 /*
- *  Licensed to the Apache Software Foundation (ASF) under one
- *  or more contributor license agreements.  See the NOTICE file
- *  distributed with this work for additional information
- *  regarding copyright ownership.  The ASF licenses this file
- *  to you under the Apache License, Version 2.0 (the
- *  "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *   * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
- */
+*  Copyright (c) 2005-2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+*
+*  WSO2 Inc. licenses this file to you under the Apache License,
+*  Version 2.0 (the "License"); you may not use this file except
+*  in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 package org.wso2.carbon.inbound.endpoint.protocol.http.core.impl;
 
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.core.SynapseEnvironment;
 import org.apache.synapse.inbound.InboundProcessorParams;
 import org.apache.synapse.inbound.InboundRequestProcessor;
@@ -32,10 +28,10 @@ import java.net.InetSocketAddress;
 
 
 /**
- * Listener class for Http Inbound Endpoints
+ * Listener class for Http Inbound Endpoint which is trigger by inbound core
  */
 public class InboundHttpListener implements InboundRequestProcessor {
-    protected Log log = LogFactory.getLog(this.getClass());
+
 
     private String injectingSequence;
     private String onErrorSequence;
@@ -55,13 +51,13 @@ public class InboundHttpListener implements InboundRequestProcessor {
     }
 
     /**
-     *calls when inbound endpoint inits by the synapse deployer
+     * calls when inbound endpoint init by the synapse deployer
      */
     @Override
     public void init() {
         InboundHttpSourceHandler inboundHttpSourceHandler = new InboundHttpSourceHandler
                 (this.inboundConfiguration, synapseEnvironment, injectingSequence, onErrorSequence);
-        InboundHttpGlobalConfiguration.addInboundHttpSourceHandler(Integer.parseInt(this.port),inboundHttpSourceHandler);
+        InboundHttpGlobalConfiguration.addInboundHttpSourceHandler(Integer.parseInt(this.port), inboundHttpSourceHandler);
         start();
     }
 
@@ -72,7 +68,7 @@ public class InboundHttpListener implements InboundRequestProcessor {
 
     @Override
     public void destroy() {
-       InboundHttpGlobalConfiguration.closeEndpoint(Integer.parseInt(this.port));
+        InboundHttpGlobalConfiguration.closeEndpoint(Integer.parseInt(this.port));
     }
 
     /**
@@ -83,7 +79,9 @@ public class InboundHttpListener implements InboundRequestProcessor {
         InboundHttpGlobalConfiguration.startEndpoint(inetSocketAddress);
     }
 
-
+    /**
+     * Start IO Reactor if not yet Started else used start one
+     */
     private void startIOReactor() {
         InboundHttpGlobalConfiguration.startIoReactor();
     }

@@ -1,24 +1,24 @@
 /*
- *  Licensed to the Apache Software Foundation (ASF) under one
- *  or more contributor license agreements.  See the NOTICE file
- *  distributed with this work for additional information
- *  regarding copyright ownership.  The ASF licenses this file
- *  to you under the Apache License, Version 2.0 (the
- *  "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *   * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
- */
+*  Copyright (c) 2005-2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+*
+*  WSO2 Inc. licenses this file to you under the Apache License,
+*  Version 2.0 (the "License"); you may not use this file except
+*  in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 package org.wso2.carbon.inbound.endpoint.protocol.http.core.impl;
 
 
+import io.netty.handler.codec.http.HttpMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpException;
@@ -34,19 +34,19 @@ import org.apache.http.nio.util.ContentOutputBuffer;
 import org.apache.http.nio.util.HeapByteBufferAllocator;
 import org.apache.http.nio.util.SimpleOutputBuffer;
 import org.apache.http.params.DefaultedHttpParams;
-import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpCoreContext;
 import org.apache.synapse.core.SynapseEnvironment;
 import org.apache.synapse.transport.passthru.Pipe;
 import org.apache.synapse.transport.passthru.ProtocolState;
 import org.wso2.carbon.inbound.endpoint.protocol.http.utils.InboundConfiguration;
 import org.wso2.carbon.inbound.endpoint.protocol.http.utils.InboundConstants;
-import org.wso2.carbon.inbound.endpoint.protocol.http.utils.InboundThreadFactory;
+
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
 
 /**
  * class interact with Client Requests and get Http Requests and passed them to Request worker
@@ -60,8 +60,6 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
     private String faultSeq;
     private InboundConfiguration inboundConfiguration;
     private ExecutorService executorService;
-
-    private static final String INBOUND_THREAD_FACTORY = "inbound_request";
     private static final String SYANPSE_RESPONSE_SOURCE_BUFFER = "synapse.response-source-buffer";
 
     public InboundHttpSourceHandler(InboundConfiguration inboundConfiguration, SynapseEnvironment synapseEnvironment,
@@ -70,13 +68,13 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
         this.injectSeq = injectSeq;
         this.faultSeq = faultSeq;
         this.inboundConfiguration = inboundConfiguration;
-        this.executorService = Executors.newFixedThreadPool(InboundConstants.WORKER_POOL_SIZE,
-                new InboundThreadFactory(INBOUND_THREAD_FACTORY));
+        this.executorService = inboundConfiguration.getInboundExecutorService();
     }
 
     /**
      * calls by http core when IO session is initiated to particular client connection.
-     * @param nHttpServerConnection
+     *
+     * @param nHttpServerConnection <>Server Side connection created by http core</>
      * @throws IOException
      * @throws HttpException
      */
@@ -86,14 +84,14 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
     }
 
     /**
+     * calls when request recived by underlying connected connection
      *
-     * @param nHttpServerConnection
-     * @throws IOException
+     * @param nHttpServerConnection <></>
+     * @throws IOException   <></>
      * @throws HttpException
      */
     public void requestReceived(NHttpServerConnection nHttpServerConnection) throws IOException, HttpException {
         try {
-            HttpContext context = nHttpServerConnection.getContext();
             if (!InboundSourceContext.assertState(nHttpServerConnection, ProtocolState.REQUEST_READY)
                     && !InboundSourceContext.assertState(nHttpServerConnection, ProtocolState.WSDL_RESPONSE_DONE)) {
                 handleInvalidState(nHttpServerConnection, "Request received");
@@ -107,19 +105,20 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
             InboundHttpSourceRequest request = new InboundHttpSourceRequest(
                     inboundConfiguration, nHttpServerConnection.getHttpRequest(), nHttpServerConnection);
             InboundSourceContext.setRequest(nHttpServerConnection, request);
-            request.setInjectSeq(injectSeq);
-            request.setFaultSeq(faultSeq);
-            request.start(nHttpServerConnection);
+            request.setInjectSeq(injectSeq);//set injecting synapse sequence
+            request.setFaultSeq(faultSeq);// set fault sequence
+            request.start(nHttpServerConnection);//start the request to read http headers
 
 
-            /******/
             String method = request.getRequest() != null ? request.getRequest().getRequestLine().getMethod().toUpperCase() : "";
-            if ("GET".equals(method) || "HEAD".equals(method)) {
+            // if HTTP GET or HEAD no entity body so need to create response buffer
+            if (HttpMethod.GET.toString().equals(method) || HttpMethod.HEAD.toString().equals(method)) {
                 HttpContext contextGetHEAD = request.getConnection().getContext();
                 ContentOutputBuffer outputBuffer = new SimpleOutputBuffer(InboundConstants.SYNAPSE_RESPONSE_BUFFER_SIZE,
                         new HeapByteBufferAllocator());
                 contextGetHEAD.setAttribute(SYANPSE_RESPONSE_SOURCE_BUFFER, outputBuffer);
             }
+            // handover to inbound thread pool
             executorService.execute(
                     new InboundHttpSourceRequestWorker(request, inboundConfiguration, synapseEnvironment));
         } catch (HttpException e) {
@@ -133,7 +132,14 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
         }
     }
 
-
+    /**
+     * calls when request body is represent and read body to wire
+     *
+     * @param nHttpServerConnection <></>
+     * @param contentDecoder        <>underlying content decoder for read wire</>
+     * @throws IOException
+     * @throws HttpException
+     */
     public void inputReady(NHttpServerConnection nHttpServerConnection, ContentDecoder contentDecoder)
             throws IOException, HttpException {
         try {
@@ -146,7 +152,7 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
             }
             InboundSourceContext.updateState(nHttpServerConnection, ProtocolState.REQUEST_BODY);
             InboundHttpSourceRequest request = InboundSourceContext.getRequest(nHttpServerConnection);
-            int readBytes = request.read(nHttpServerConnection, contentDecoder);
+            request.read(nHttpServerConnection, contentDecoder);// read content from wire
         } catch (IOException e) {
             informReaderError(nHttpServerConnection);
             log.error(e.getMessage(), e);
@@ -156,6 +162,13 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
 
     }
 
+    /**
+     * calls when response is recived from outbound side
+     *
+     * @param nHttpServerConnection
+     * @throws IOException
+     * @throws HttpException
+     */
     public void responseReady(NHttpServerConnection nHttpServerConnection) throws IOException, HttpException {
         try {
             ProtocolState protocolState = InboundSourceContext.getState(nHttpServerConnection);
@@ -188,6 +201,14 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
         }
     }
 
+    /**
+     * calls when reposne body is writting to wire
+     *
+     * @param nHttpServerConnection
+     * @param contentEncoder
+     * @throws IOException
+     * @throws HttpException
+     */
     public void outputReady(NHttpServerConnection nHttpServerConnection, ContentEncoder contentEncoder) throws
             IOException, HttpException {
         try {
@@ -198,7 +219,7 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
                 HttpContext context = nHttpServerConnection.getContext();
                 ContentOutputBuffer outBuf = (ContentOutputBuffer) context.getAttribute(
                         SYANPSE_RESPONSE_SOURCE_BUFFER);
-                int bytesWritten = outBuf.produceContent(contentEncoder);
+                outBuf.produceContent(contentEncoder);
                 nHttpServerConnection.requestInput();
                 if (outBuf instanceof SimpleOutputBuffer && !((SimpleOutputBuffer) outBuf).hasData()) {
                     inboundConfiguration.getSourceConnections().releaseConnection(nHttpServerConnection);
@@ -218,10 +239,8 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
             }
 
             InboundSourceContext.updateState(nHttpServerConnection, ProtocolState.RESPONSE_BODY);
-
             InboundHttpSourceResponse response = InboundSourceContext.getResponse(nHttpServerConnection);
-
-            int bytesSent = response.write(nHttpServerConnection, contentEncoder);
+            response.write(nHttpServerConnection, contentEncoder);
         } catch (IOException e) {
             informWriterError(nHttpServerConnection);
             InboundSourceContext.updateState(nHttpServerConnection, ProtocolState.CLOSING);
@@ -229,10 +248,22 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
         }
     }
 
+    /**
+     * calls when end of thr connection
+     *
+     * @param nHttpServerConnection <></>
+     * @throws IOException
+     */
     public void endOfInput(NHttpServerConnection nHttpServerConnection) throws IOException {
         nHttpServerConnection.close();
     }
 
+    /**
+     * Time out handler
+     *
+     * @param nHttpServerConnection <></>
+     * @throws IOException
+     */
     public void timeout(NHttpServerConnection nHttpServerConnection) throws IOException {
         ProtocolState state = InboundSourceContext.getState(nHttpServerConnection);
 
@@ -242,8 +273,6 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
             }
         } else if (state == ProtocolState.REQUEST_BODY ||
                 state == ProtocolState.REQUEST_HEAD) {
-
-
             informReaderError(nHttpServerConnection);
             log.warn("Connection time out while reading the request: " + nHttpServerConnection);
         } else if (state == ProtocolState.RESPONSE_BODY ||
@@ -253,12 +282,16 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
         } else if (state == ProtocolState.REQUEST_DONE) {
             log.warn("Connection time out after request is read: " + nHttpServerConnection);
         }
-
         InboundSourceContext.updateState(nHttpServerConnection, ProtocolState.CLOSED);
-
         inboundConfiguration.getSourceConnections().shutDownConnection(nHttpServerConnection, true);
     }
 
+
+    /**
+     * connection closing method
+     *
+     * @param nHttpServerConnection <></>
+     */
     public void closed(NHttpServerConnection nHttpServerConnection) {
         ProtocolState state = InboundSourceContext.getState(nHttpServerConnection);
         boolean isFault = false;
@@ -284,6 +317,12 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
         inboundConfiguration.getSourceConnections().shutDownConnection(nHttpServerConnection, isFault);
     }
 
+    /**
+     * Exception handler method
+     *
+     * @param nHttpServerConnection
+     * @param ex
+     */
     public void exception(NHttpServerConnection nHttpServerConnection, Exception ex) {
         if (ex instanceof IOException) {
             ProtocolState state = InboundSourceContext.getState(nHttpServerConnection);
@@ -298,7 +337,6 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
             } else if (state == ProtocolState.RESPONSE_DONE) {
                 informWriterError(nHttpServerConnection);
             }
-
             InboundSourceContext.updateState(nHttpServerConnection, ProtocolState.CLOSED);
             inboundConfiguration.getSourceConnections().shutDownConnection(nHttpServerConnection, true);
         } else if (ex instanceof HttpException) {
@@ -315,12 +353,14 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
                         new DefaultedHttpParams(inboundConfiguration.buildHttpParams(),
                                 response.getParams())
                 );
+
+
                 response.addHeader(HTTP.CONN_DIRECTIVE, HTTP.CONN_CLOSE);
 
                 // Pre-process HTTP request
-                httpContext.setAttribute(ExecutionContext.HTTP_CONNECTION, nHttpServerConnection);
-                httpContext.setAttribute(ExecutionContext.HTTP_REQUEST, null);
-                httpContext.setAttribute(ExecutionContext.HTTP_RESPONSE, response);
+                httpContext.setAttribute(HttpCoreContext.HTTP_CONNECTION, nHttpServerConnection);
+                httpContext.setAttribute(HttpCoreContext.HTTP_REQUEST, null);
+                httpContext.setAttribute(HttpCoreContext.HTTP_RESPONSE, response);
 
                 inboundConfiguration.getHttpProcessor().process(response, httpContext);
 
@@ -339,6 +379,13 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
         }
     }
 
+
+    /**
+     * Invalid State handler
+     *
+     * @param conn
+     * @param action
+     */
     private void handleInvalidState(NHttpServerConnection conn, String action) {
         log.warn(action + " while the handler is in an inconsistent state " +
                 InboundSourceContext.getState(conn));
@@ -346,6 +393,11 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
         inboundConfiguration.getSourceConnections().shutDownConnection(conn, true);
     }
 
+    /**
+     * Inform read Error to reader for producing the error
+     *
+     * @param conn
+     */
     private void informReaderError(NHttpServerConnection conn) {
         Pipe reader = InboundSourceContext.get(conn).getReader();
         if (reader != null) {
@@ -353,6 +405,11 @@ public class InboundHttpSourceHandler implements NHttpServerEventHandler {
         }
     }
 
+    /**
+     * Inform write error to writer for consume error
+     *
+     * @param conn
+     */
     private void informWriterError(NHttpServerConnection conn) {
         Pipe writer = InboundSourceContext.get(conn).getWriter();
         if (writer != null) {

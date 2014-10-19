@@ -1,34 +1,33 @@
 /*
- *  Licensed to the Apache Software Foundation (ASF) under one
- *  or more contributor license agreements.  See the NOTICE file
- *  distributed with this work for additional information
- *  regarding copyright ownership.  The ASF licenses this file
- *  to you under the Apache License, Version 2.0 (the
- *  "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *   * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
- */
+*  Copyright (c) 2005-2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+*
+*  WSO2 Inc. licenses this file to you under the Apache License,
+*  Version 2.0 (the "License"); you may not use this file except
+*  in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 package org.wso2.carbon.inbound.endpoint.protocol.http.core.impl;
 
 
 import org.apache.http.nio.NHttpConnection;
 import org.apache.synapse.transport.passthru.Pipe;
 import org.apache.synapse.transport.passthru.ProtocolState;
-import org.apache.synapse.transport.passthru.SourceContext;
 import org.wso2.carbon.inbound.endpoint.protocol.http.utils.InboundConfiguration;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Class responsible for keep state information for connections
+ */
 public class InboundSourceContext {
 
     public static final String CONNECTION_INFORMATION = "CONNECTION_INFORMATION";
@@ -50,7 +49,6 @@ public class InboundSourceContext {
 
     private Pipe writer;
 
-    private Lock lock = new ReentrantLock();
 
     public InboundSourceContext(InboundConfiguration sourceConfiguration) {
         this.sourceConfiguration = sourceConfiguration;
@@ -113,9 +111,6 @@ public class InboundSourceContext {
         this.writer = null;
     }
 
-    public Lock getLock() {
-        return lock;
-    }
 
     public boolean isShutDown() {
         return shutDown;
@@ -141,6 +136,11 @@ public class InboundSourceContext {
         this.writer = writer;
     }
 
+    /**
+     * @param conn
+     * @param state
+     * @param configuration
+     */
     public static void create(NHttpConnection conn, ProtocolState state,
                               InboundConfiguration configuration) {
         InboundSourceContext info = new InboundSourceContext(configuration);
@@ -150,6 +150,10 @@ public class InboundSourceContext {
         info.setState(state);
     }
 
+    /**
+     * @param conn
+     * @param state
+     */
     public static void updateState(NHttpConnection conn, ProtocolState state) {
         InboundSourceContext info = (InboundSourceContext)
                 conn.getContext().getAttribute(CONNECTION_INFORMATION);
@@ -216,10 +220,5 @@ public class InboundSourceContext {
         return (InboundSourceContext) conn.getContext().getAttribute(CONNECTION_INFORMATION);
     }
 
-    public static Lock getLock(NHttpConnection conn) {
-        InboundSourceContext info = (InboundSourceContext)
-                conn.getContext().getAttribute(CONNECTION_INFORMATION);
 
-        return info != null ? info.getLock() : null;
-    }
 }

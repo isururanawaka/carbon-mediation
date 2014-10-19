@@ -1,21 +1,20 @@
 /*
- *  Licensed to the Apache Software Foundation (ASF) under one
- *  or more contributor license agreements.  See the NOTICE file
- *  distributed with this work for additional information
- *  regarding copyright ownership.  The ASF licenses this file
- *  to you under the Apache License, Version 2.0 (the
- *  "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *   * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
- */
+*  Copyright (c) 2005-2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+*
+*  WSO2 Inc. licenses this file to you under the Apache License,
+*  Version 2.0 (the "License"); you may not use this file except
+*  in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 package org.wso2.carbon.inbound.endpoint.protocol.http.utils;
 
 
@@ -33,13 +32,19 @@ import java.util.concurrent.locks.ReentrantLock;
 public class InboundSourceConnections {
     private static Log log = LogFactory.getLog(InboundSourceConnections.class);
 
-    /** The pool of connections in use */
+    /**
+     * The pool of connections in use
+     */
     private volatile List<NHttpServerConnection> busyConnections = new ArrayList<NHttpServerConnection>();
 
-    /** The pool of connections that are not being used */
+    /**
+     * The pool of connections that are not being used
+     */
     private volatile List<NHttpServerConnection> freeConnections = new ArrayList<NHttpServerConnection>();
 
-    /** Lock for synchronizing the access to the pools */
+    /**
+     * Lock for synchronizing the access to the pools
+     */
     private final Lock lock = new ReentrantLock();
 
     /**
@@ -117,7 +122,7 @@ public class InboundSourceConnections {
     /**
      * Shutdown a connection
      *
-     * @param conn the connection that needs to be shut down
+     * @param conn    the connection that needs to be shut down
      * @param isError whether an error is causing this shutdown of the connection
      *                It is very important to set this flag correctly.
      *                When an error causing the shutdown of the connections we should not
@@ -172,18 +177,5 @@ public class InboundSourceConnections {
             lock.unlock();
         }
     }
-
-    public void destroy() {
-        for (NHttpServerConnection conn : freeConnections) {
-            shutDownConnection(conn);
-        }
-
-        // for all the busy connections we have to notify that their cannot
-        // be anymore requests over them
-        for (NHttpServerConnection conn : busyConnections) {
-            InboundSourceContext.get(conn).setShutDown(true);
-        }
-    }
-
 
 }

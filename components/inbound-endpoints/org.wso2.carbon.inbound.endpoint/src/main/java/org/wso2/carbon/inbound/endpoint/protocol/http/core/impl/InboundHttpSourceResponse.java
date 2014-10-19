@@ -1,24 +1,24 @@
 /*
- *  Licensed to the Apache Software Foundation (ASF) under one
- *  or more contributor license agreements.  See the NOTICE file
- *  distributed with this work for additional information
- *  regarding copyright ownership.  The ASF licenses this file
- *  to you under the Apache License, Version 2.0 (the
- *  "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *   * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
- */
+*  Copyright (c) 2005-2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+*
+*  WSO2 Inc. licenses this file to you under the Apache License,
+*  Version 2.0 (the "License"); you may not use this file except
+*  in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 package org.wso2.carbon.inbound.endpoint.protocol.http.core.impl;
 
 
+import io.netty.handler.codec.http.HttpMethod;
 import org.apache.http.*;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
@@ -66,21 +66,15 @@ public class InboundHttpSourceResponse {
      * Connection strategy
      */
     private ConnectionReuseStrategy connStrategy = new DefaultConnectionReuseStrategy();
-    /** Chunk response or not */
-    // private boolean chunk = true;
-    /**
-     * response has an entity or not*
-     */
-    private boolean hasEntity = true;
+
 
     private InboundHttpSourceRequest request = null;
 
     /**
      * If version change required default HTTP 1.1 will be overridden
      */
-    private boolean versionChangeRequired = false;
+    private boolean versionChangeRequired = true;
 
-    private static final String HTTP_METHOD_HEAD = "HEAD";
 
     public InboundHttpSourceResponse(InboundConfiguration config, int status, InboundHttpSourceRequest request) {
         this(config, status, null, request);
@@ -94,6 +88,11 @@ public class InboundHttpSourceResponse {
         this.request = request;
     }
 
+    /**
+     * add writer to the pipe
+     *
+     * @param pipe
+     */
     public void connect(Pipe pipe) {
         this.pipe = pipe;
 
@@ -117,8 +116,8 @@ public class InboundHttpSourceResponse {
 
         if (statusLine != null) {
             response.setStatusLine(version, status, statusLine);
-        }
-        if (versionChangeRequired) {
+            versionChangeRequired = false;
+        } else if (versionChangeRequired) {
             response.setStatusLine(version, status);
         } else {
             response.setStatusCode(status);
@@ -178,8 +177,6 @@ public class InboundHttpSourceResponse {
 
         // Handle non entity body responses
         if (entity == null) {
-            hasEntity = false;
-            // Reset connection state
             sourceConfiguration.getSourceConnections().releaseConnection(conn);
             // Make ready to deal with a new request
             conn.requestInput();
@@ -224,6 +221,12 @@ public class InboundHttpSourceResponse {
         return bytes;
     }
 
+    /**
+     * add header specified
+     *
+     * @param name
+     * @param value
+     */
     public void addHeader(String name, String value) {
         if (headers.get(name) == null) {
             TreeSet<String> values = new TreeSet<String>();
@@ -239,14 +242,27 @@ public class InboundHttpSourceResponse {
         this.status = status;
     }
 
+
+    /**
+     * remove header specified
+     *
+     * @param name
+     */
     public void removeHeader(String name) {
         if (headers.get(name) != null) {
             headers.remove(name);
         }
     }
 
+    /**
+     * check is response can have body
+     *
+     * @param request
+     * @param response
+     * @return
+     */
     private boolean canResponseHaveBody(final HttpRequest request, final HttpResponse response) {
-        if (request != null && HTTP_METHOD_HEAD.equalsIgnoreCase(request.getRequestLine().getMethod())) {
+        if (request != null && HttpMethod.HEAD.toString().equalsIgnoreCase(request.getRequestLine().getMethod())) {
             return false;
         }
         int status = response.getStatusLine().getStatusCode();
@@ -254,10 +270,6 @@ public class InboundHttpSourceResponse {
                 && status != HttpStatus.SC_NO_CONTENT
                 && status != HttpStatus.SC_NOT_MODIFIED
                 && status != HttpStatus.SC_RESET_CONTENT;
-    }
-
-    public boolean hasEntity() {
-        return this.hasEntity;
     }
 
 }

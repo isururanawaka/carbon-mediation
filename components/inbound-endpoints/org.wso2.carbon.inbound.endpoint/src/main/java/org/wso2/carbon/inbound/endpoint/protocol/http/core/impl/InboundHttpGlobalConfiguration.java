@@ -34,7 +34,7 @@ import java.util.Map;
 
 /**
  * class responsible for provide and register
- * IOReactor,inboundConfiuration, response worker, and handler maps.
+ * IOReactor,inboundConfiguration, response worker, and handler maps.
  */
 public class InboundHttpGlobalConfiguration {
     private static Logger log = Logger.getLogger(InboundHttpGlobalConfiguration.class);
@@ -45,15 +45,13 @@ public class InboundHttpGlobalConfiguration {
     private static boolean isIOReactorStarted;
     private static InboundConfiguration inboundConfiguration;
     private static InboundHttpSourceResponseWorker inboundHttpSourceResponseWorker;
-    private static final String INBOUND_THREAD_GROUP="Inbound http thread group";
-    private static final String INBOUND_THREAD_FACTORY="Inbound http core impl thread factory";
+    private static final String INBOUND_THREAD_GROUP = "Inbound http thread group";
+    private static final String INBOUND_THREAD_FACTORY = "Inbound http core impl thread factory";
 
-
-
-    public static Map<Integer, InboundHttpSourceHandler> getInboundHttpSourceHandlerMap() {
-        return inboundHttpSourceHandlerMap;
-    }
-
+    /**
+     * @param port                     <>port which registered inbound endpoint</>
+     * @param inboundHttpSourceHandler <> handler class for each inbound Endpoint</>
+     */
     public static void addInboundHttpSourceHandler(int port, InboundHttpSourceHandler inboundHttpSourceHandler) {
         if (inboundHttpSourceHandlerMap.get(port) == null) {
             inboundHttpSourceHandlerMap.put(port, inboundHttpSourceHandler);
@@ -63,6 +61,9 @@ public class InboundHttpGlobalConfiguration {
         }
     }
 
+    /**
+     * @return MultiListnerIODispatch
+     */
     public static MultiListnerIODispatch getMultiListnerIODispatch() {
         if (multiListnerIODispatch == null) {
             multiListnerIODispatch = new MultiListnerIODispatch(inboundHttpSourceHandlerMap);
@@ -72,7 +73,8 @@ public class InboundHttpGlobalConfiguration {
 
     /**
      * start the IO Reactor if it not started else provide already used ioreactor.
-     * @return
+     *
+     * @return DefaultListeningIOReactor
      */
     public static DefaultListeningIOReactor startIoReactor() {
         if (!isIOReactorStarted) {
@@ -82,7 +84,7 @@ public class InboundHttpGlobalConfiguration {
             try {
                 ioReactor = new DefaultListeningIOReactor(
                         inboundConfiguration.buildIOReactorConfig(),
-                        new NativeThreadFactory(new ThreadGroup(INBOUND_THREAD_GROUP),INBOUND_THREAD_FACTORY ));
+                        new NativeThreadFactory(new ThreadGroup(INBOUND_THREAD_GROUP), INBOUND_THREAD_FACTORY));
 
                 ioReactor.setExceptionHandler(new IOReactorExceptionHandler() {
 
@@ -137,12 +139,11 @@ public class InboundHttpGlobalConfiguration {
         return ioReactor;
     }
 
-    /**
-     * starting endpoints for each ports
-     * @param inetSocketAddress
+    /*
+     * @param InetSocketAddress
      */
-    public static void startEndpoint(InetSocketAddress inetSocketAddress)  {
-        ListenerEndpoint endpoint = null;
+    public static void startEndpoint(InetSocketAddress inetSocketAddress) {
+        ListenerEndpoint endpoint;
         if (ioReactor != null) {
             endpoint = ioReactor.listen(inetSocketAddress);
             listenerEndpointMap.put(inetSocketAddress.getPort(), endpoint);
@@ -172,11 +173,12 @@ public class InboundHttpGlobalConfiguration {
     }
 
     /**
-     * Take inbound endpoint bounded to port and undeploy it.
-     * if no more inbound endpoints registered shutdown io reactor.
-     * @param port
+     * <>close endpoint relevant to Inbound Endpoint and if no registered ports shutdown reactor</>
+     *
+     * @param port <>closing port</>
+     * @return <> void</>
      */
-    public static void closeEndpoint(int port)  {
+    public static void closeEndpoint(int port) {
         if (listenerEndpointMap.get(port) != null) {
             listenerEndpointMap.get(port).close();
             listenerEndpointMap.remove(port);
@@ -187,24 +189,22 @@ public class InboundHttpGlobalConfiguration {
                     ioReactor.shutdown();
                     isIOReactorStarted = false;
                 } catch (IOException e) {
-                   log.error(e.getMessage());
+                    log.error(e.getMessage());
                 }
             }
         } else {
             log.error("cannot find Endpoint relevant to inbound port " + port);
-
         }
 
     }
 
-    public static boolean isIsIOReactorStarted() {
-        return isIOReactorStarted;
-    }
-
+    /**
+     * @return InboundHttpSourceResponseWorker
+     */
     public static InboundHttpSourceResponseWorker getInboundHttpSourceResponseWorker() {
-        if(inboundHttpSourceResponseWorker==null){
-            inboundHttpSourceResponseWorker= new InboundHttpSourceResponseWorker();
-            return  inboundHttpSourceResponseWorker;
+        if (inboundHttpSourceResponseWorker == null) {
+            inboundHttpSourceResponseWorker = new InboundHttpSourceResponseWorker();
+            return inboundHttpSourceResponseWorker;
         }
         return inboundHttpSourceResponseWorker;
     }
