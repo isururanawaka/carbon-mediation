@@ -18,7 +18,7 @@
 package org.wso2.carbon.inbound.endpoint.protocol.http.core.impl;
 
 
-import io.netty.handler.codec.http.HttpMethod;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpException;
@@ -44,6 +44,7 @@ import org.wso2.carbon.inbound.endpoint.protocol.http.utils.InboundConfiguration
 import org.wso2.carbon.inbound.endpoint.protocol.http.utils.InboundConstants;
 
 
+import javax.ws.rs.HttpMethod;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 

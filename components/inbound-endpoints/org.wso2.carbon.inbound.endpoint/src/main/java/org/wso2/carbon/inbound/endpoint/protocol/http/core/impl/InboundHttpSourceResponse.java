@@ -18,7 +18,8 @@
 package org.wso2.carbon.inbound.endpoint.protocol.http.core.impl;
 
 
-import io.netty.handler.codec.http.HttpMethod;
+
+
 import org.apache.http.*;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
@@ -33,6 +34,7 @@ import org.apache.synapse.transport.passthru.ProtocolState;
 import org.wso2.carbon.inbound.endpoint.protocol.http.utils.InboundConfiguration;
 
 
+import javax.ws.rs.HttpMethod;
 import java.io.IOException;
 import java.util.*;
 
@@ -262,7 +264,7 @@ public class InboundHttpSourceResponse {
      * @return
      */
     private boolean canResponseHaveBody(final HttpRequest request, final HttpResponse response) {
-        if (request != null && HttpMethod.HEAD.toString().equalsIgnoreCase(request.getRequestLine().getMethod())) {
+        if (request != null && HttpMethod.HEAD.equalsIgnoreCase(request.getRequestLine().getMethod())) {
             return false;
         }
         int status = response.getStatusLine().getStatusCode();
