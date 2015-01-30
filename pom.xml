@@ -22,7 +22,7 @@
 
     <groupId>org.wso2</groupId>
     <artifactId>wso2</artifactId>
-    <version>4.3.0</version>
+    <version>1</version>
     <name>WSO2 Carbon - Platform Aggregator Pom</name>
     <url>http://wso2.org</url>
     <profiles>
